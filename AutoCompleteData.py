@@ -5,5 +5,7 @@ class AutoCompleteData:
         self.offset = offset
         self.score = score
 
-    def print(self):
-        print("sentence: " + self.complete_sent + str(self.sorce_file))
+    def print(self,text):
+        first_index = self.complete_sent.find(text)
+        end_index = first_index+len(text)
+        print(self.complete_sent + " ( the source from " + str(self.sorce_file) + " in line " + str(self.offset) +"score : "+str(self.score)+ " )")
