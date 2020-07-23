@@ -7,28 +7,28 @@ import linecache
 import pandas as pd
 
 
-def replace(sub_text, index):
-    for char in ascii_lowercase:
-        new_str = sub_text[:index] + char + sub_text[index + 1:]
-        if new_str in queries.keys():
-            return queries[new_str]
-    return set()
-
-
-def add(sub_text, index):
-    for char in ascii_lowercase:
-        new_str = sub_text[:index] + char + sub_text[index:]
-        if new_str in queries.keys():
-            return queries[new_str]
-    return set()
-
-
-def sub(sub_text, index):
-    for char in ascii_lowercase:
-        new_str = sub_text[:index] + sub_text[index + 1:]
-        if new_str in queries.keys():
-            return queries[new_str]
-    return set()
+# def replace(sub_text, index):
+#     for char in ascii_lowercase:
+#         new_str = sub_text[:index] + char + sub_text[index + 1:]
+#         if new_str in queries.keys():
+#             return queries[new_str]
+#     return set()
+#
+#
+# def add(sub_text, index):
+#     for char in ascii_lowercase:
+#         new_str = sub_text[:index] + char + sub_text[index:]
+#         if new_str in queries.keys():
+#             return queries[new_str]
+#     return set()
+#
+#
+# def sub(sub_text, index):
+#     for char in ascii_lowercase:
+#         new_str = sub_text[:index] + sub_text[index + 1:]
+#         if new_str in queries.keys():
+#             return queries[new_str]
+#     return set()
 
 
 def create_auto_complete_data(list_of_indexes, score_list):
@@ -42,50 +42,82 @@ def create_auto_complete_data(list_of_indexes, score_list):
     return auto_complete_data_list
 
 
-def remove_duplications(res):
-    pd.Series(res).drop_duplicates().tolist()
+def extract_string_from_file(file_name, line):
+    return "".join(linecache.getline(file_name, (line)).split("\n"))
 
 
-def try_to_fix(start_index, end_index, func_to_do, score_to_sub, sub_text, score_list):
-    sub_text_len = len(sub_text)
-    ret_res = []
-    for index in range(start_index, end_index):
-        ret_res += func_to_do(sub_text, index)
-        score_list += [sub_text_len * 2 - score_to_sub] * len(ret_res)
-        remove_duplications(ret_res)
-        if len(ret_res) > 5: return ret_res[:5]
-    return ret_res
+# def create_auto_complete_data(match_sentences_indexes, score_list):
+#     K_auto_completed = []
+#     for i, ind in enumerate(match_sentences_indexes):
+#         K_auto_completed.append(
+#             AutoCompleteData(extract_string_from_file(file_data_dict[ind].name, file_data_dict[ind].line),
+#                              file_data_dict[ind].name, file_data_dict[ind].line, score_list[i]))
+#     return K_auto_completed
 
 
-def complete(sub_text):
-    sub_tex_len = len(sub_text)
-    score_list = []
-    if sub_text in queries.keys():
-        score_list += [sub_tex_len * 2] * 5
-        return create_auto_complete_data(queries[sub_text], score_list)
-    res = []
-    res += try_to_fix(3, sub_tex_len, replace, 1, sub_text, score_list)
-    if len(res) > 5: return create_auto_complete_data(res[:5], score_list)
-    res += try_to_fix(4, sub_tex_len, add, 2, sub_text, score_list)
-    if len(res) > 5: return create_auto_complete_data(res[:5], score_list)
-    res += try_to_fix(4, sub_tex_len, sub, 2, sub_text, score_list)
-    if len(res) > 5: return create_auto_complete_data(res[:5], score_list)
-    if sub_tex_len > 2:
-        res += try_to_fix(2, 3, replace, 3, sub_text, score_list)
-        if len(res) > 5: return create_auto_complete_data(res[:5], score_list)
-    if sub_tex_len > 1:
-        res += try_to_fix(1, 2, replace, 4, sub_text, score_list)
-        if len(res) > 5: return create_auto_complete_data(res[:5], score_list)
-    if sub_tex_len > 3:
-        res += try_to_fix(3, 4, add, 4, sub_text, score_list)
-        if len(res) > 5: return create_auto_complete_data(res[:5], score_list)
-        res += try_to_fix(3, 4, sub, 4, sub_text, score_list)
-        if len(res) > 5: return create_auto_complete_data(res[:5], score_list)
-    res += try_to_fix(0, 1, replace, 5, sub_text, score_list)
-    if len(res) > 5: return create_auto_complete_data(res[:5], score_list)
-    for index in range(0, 3)[::-1]:
-        res += try_to_fix(index, index + 1, add, (((2 - index) * 2) + 6), sub_text, score_list)
-        if len(res) > 5: return create_auto_complete_data(res[:5], score_list)
-        res += try_to_fix(index, index + 1, sub, (((2 - index) * 2) + 6), sub_text, score_list)
-        if len(res) > 5: return create_auto_complete_data(res[:5], score_list)
-    return create_auto_complete_data(res, score_list)
+def score_of_replace(index):
+    switcher = {
+        0: -5,
+        1: -4,
+        2: -3,
+        3: -2,
+    }
+    return switcher.get(index, -1)
+
+
+def score_of_add_or_remove(index):
+    switcher = {
+        0: -10,
+        1: -8,
+        2: -6,
+        3: -4,
+    }
+    return switcher.get(index, -2)
+
+
+def get_score(input, index, flag):
+    if flag:
+        return len(input) * 2 + score_of_replace(index)
+    return len(input) * 2 + score_of_add_or_remove(index)
+
+
+def get_score(input, index, flag):
+    if flag:
+        return len(input) * 2 + score_of_replace(index)
+    return len(input) * 2 + score_of_add_or_remove(index)
+
+
+def update_match_k_best(matching_sentence, input, index, list_of_k_best, score_list, flag):
+    current_score = get_score(input, index, flag)
+
+    if matching_sentence in queries:
+        if not list_of_k_best:
+            for ind in range(len(queries[matching_sentence])):
+                list_of_k_best.append(queries[matching_sentence][ind])
+                score_list.append(current_score)
+
+        for ind in range(len(queries[matching_sentence])):
+            if current_score > min(score_list) and queries[matching_sentence][ind] not in list_of_k_best:
+                list_of_k_best[score_list.index(min(score_list))] = queries[matching_sentence][ind]
+                score_list[score_list.index(min(score_list))] = current_score
+
+
+def complete(input):
+    input_len = len(input)
+    score_list = [input_len * 2] * 5
+
+    if input in queries:
+        return create_auto_complete_data(queries[input], score_list)
+    list_of_k_best = []
+    score_list = [0] * 5
+
+    for i in range(len(input)):
+        for ch in ascii_lowercase:
+            replaced_sentence = input[:i] + ch + input[i + 1:]
+            added_sentence = input[:i] + ch + input[i:]
+            removed_sentence = input[:i] + ch + input[i + 1:]
+            update_match_k_best(replaced_sentence, input, i, list_of_k_best, score_list, True)
+            update_match_k_best(added_sentence, input, i, list_of_k_best, score_list, False)
+            update_match_k_best(removed_sentence, input, i, list_of_k_best, score_list, False)
+
+    return create_auto_complete_data(list_of_k_best, score_list)
