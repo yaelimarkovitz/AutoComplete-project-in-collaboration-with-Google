@@ -1,7 +1,7 @@
 from init import queries
 from AutoCompleteData import AutoCompleteData
 from string import ascii_lowercase
-from init import file_list
+from init import file_dict
 import os
 import linecache
 import pandas as pd
@@ -34,13 +34,11 @@ def sub(sub_text, index):
 def create_auto_complete_data(list_of_indexes, score_list):
     auto_complete_data_list = []
     for i, index in enumerate(list_of_indexes):
-        # my_file = open(file_list[index].file_name)
-        # sentences = my_file.read().split("\n")
-        sentences = " ".join(linecache.getline(file_list[index].file_name, file_list[index].offset).split("\n"))
+        sentences = " ".join(linecache.getline(file_dict[index].file_name, file_dict[index].offset).split("\n"))
         sentences = sentences[:len(sentences) - 1]
         auto_complete_data_list.append(
-            AutoCompleteData(str(i + 1) + ". " + sentences.strip(), os.path.basename(file_list[index].file_name),
-                             file_list[index].offset, score_list[i]))
+            AutoCompleteData(str(i + 1) + ". " + sentences.strip(), os.path.basename(file_dict[index].file_name),
+                             file_dict[index].offset, score_list[i]))
     return auto_complete_data_list
 
 
