@@ -1,9 +1,6 @@
 import os
 import linecache
-import zipfile
-from AutoCompleteData import AutoCompleteData
-from file_data import FileData
-import re
+from model.file_data import FileData
 import string
 
 queries = {}
@@ -11,9 +8,6 @@ file_dict = {}
 
 
 def read_from_file(index):
-    # with open(file_list[index].file_name, encoding='utf-8') as cur_file:
-    #     data = cur_file.read().split('\n')
-    #     return data[file_list[index].offset]
     word = " ".join(linecache.getline(file_dict[index].file_name, file_dict[index].offset).split("\n"))
     return word
 
@@ -73,7 +67,7 @@ def directories_traversal(directory_, counter=0):
 
 
 def init_dict():
-    #data_zip = zipfile.ZipFile('technology_texts.zip', 'r')
+    #data_zip = zipfile.ZipFile('texts_to_init/technology_texts.zip', 'r')
     #data_zip.extractall(path='extract_dir/')
     #directories_traversal('extract_dir/')
-     read_data("license.txt")
+     read_data("texts_to_init/license.txt")
